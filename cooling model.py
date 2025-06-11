@@ -31,7 +31,7 @@ class PIDController:
 def system_model(time_steps, target_temperatures, durations, Kp, Ki, Kd, heating_delay, cooling_delay):
     heating_power = 24  # kW
     cooling_power = {20: 35, 0: 25, -20: 14.5, -30: 6.5, -40: 2.6}  # kW
-    fluid_capacity = 500  # Arbitrary unit
+    fluid_capacity = 100  # Arbitrary unit
     dt = 1  # seconds
 
     # Build target temperature profile
@@ -59,7 +59,8 @@ def system_model(time_steps, target_temperatures, durations, Kp, Ki, Kd, heating
                     heating_transition = heating_delay
             cooling_active = False
             cooling_transition = 0
-            temp_change = heating_power * control_signal * (heating_transition / heating_delay if heating_delay > 0 else 1) / fluid_capacity
+            max_heating_rate = heating_power * (heating_transition / heating_delay if heating_delay > 0 else 1) / fluid_capacity
+            temp_change = min(control_signal, max_heating_rate)
         else:
             if not cooling_active:
                 cooling_transition += dt
@@ -70,7 +71,8 @@ def system_model(time_steps, target_temperatures, durations, Kp, Ki, Kd, heating
             heating_transition = 0
             applicable_keys = list(filter(lambda x: x <= current_temp, cooling_power.keys()))
             cooling = cooling_power[max(applicable_keys)] if applicable_keys else cooling_power[min(cooling_power.keys())]
-            temp_change = cooling * control_signal * (cooling_transition / cooling_delay if cooling_delay > 0 else 1) / fluid_capacity
+            max_cooling_rate = cooling * (cooling_transition / cooling_delay if cooling_delay > 0 else 1) / fluid_capacity
+            temp_change = max(control_signal, -max_cooling_rate)
 
         new_temp = current_temp + temp_change * dt
         temperatures.append(new_temp)
@@ -82,8 +84,8 @@ st.title("Temperature Control Simulation")
 
 # Sidebar inputs
 st.sidebar.header("PID Settings")
-Kp = st.sidebar.slider("Kp", 0.0, 10.0, 1.0)
-Ki = st.sidebar.slider("Ki", 0.0, 1.0, 0.01)
+Kp = st.sidebar.slider("Kp", 0.0, 2000.0, 1000.0)
+Ki = st.sidebar.slider("Ki", 0.0, 1.0, 0.001)
 Kd = st.sidebar.slider("Kd", 0.0, 1.0, 0.005)
 
 st.sidebar.header("Delay Settings")
