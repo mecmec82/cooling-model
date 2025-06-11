@@ -89,8 +89,8 @@ Ki = st.sidebar.slider("Ki", 0.0, 1.0, 0.001)
 Kd = st.sidebar.slider("Kd", 0.0, 1.0, 0.005)
 
 st.sidebar.header("Delay Settings")
-heating_delay = st.sidebar.slider("Heating Delay (seconds)", 0, 5000, 60)
-cooling_delay = st.sidebar.slider("Cooling Delay (seconds)", 0, 5000, 60)
+heating_delay = st.sidebar.slider("Heating Delay (seconds)", 0, 200, 60)
+cooling_delay = st.sidebar.slider("Cooling Delay (seconds)", 0, 200, 60)
 
 st.sidebar.header("Target Temperatures and Durations")
 target_temperatures = st.sidebar.text_input("Target Temperatures (comma-separated)", "20, 10, 20")
