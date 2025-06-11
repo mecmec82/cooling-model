@@ -31,7 +31,7 @@ class PIDController:
 def system_model(time_steps, target_temperatures, durations, Kp, Ki, Kd, heating_delay, cooling_delay):
     heating_power = 24  # kW
     cooling_power = {20: 35, 0: 25, -20: 14.5, -30: 6.5, -40: 2.6}  # kW
-    fluid_capacity = 1000  # Arbitrary unit
+    fluid_capacity = 500  # Arbitrary unit
     dt = 1  # seconds
 
     # Build target temperature profile
