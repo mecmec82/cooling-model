@@ -82,7 +82,7 @@ st.title("Temperature Control Simulation")
 
 # Sidebar inputs
 st.sidebar.header("PID Settings")
-Kp = st.sidebar.slider("Kp", 0.0, 10.0, 1000.0)
+Kp = st.sidebar.slider("Kp", 0.0, 10.0, 0.1)
 Ki = st.sidebar.slider("Ki", 0.0, 1.0, 0.001)
 Kd = st.sidebar.slider("Kd", 0.0, 1.0, 0.005)
 
