@@ -38,7 +38,7 @@ st.title("Fluid Conditioning Loop Model")
 
 # Sidebar controls
 st.sidebar.header("Adjust Parameters")
-Q_edu = st.sidebar.slider("EDU Heat Output (kW)", 0.0, 10.0, 5.0)
+Q_edu = st.sidebar.slider("EDU Heat Output (kW)", 0.0, 10.0, 0.0)
 Kp = st.sidebar.slider("PID Proportional Gain (Kp)", 0.0, 200.0, 50.0)
 Ki = st.sidebar.slider("PID Integral Gain (Ki)", 0.0, 20.0, 0.0)
 Kd = st.sidebar.slider("PID Derivative Gain (Kd)", 0.0, 20.0, 0.0)
