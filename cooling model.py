@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Constants
-VOLUME = 20  # litres
+VOLUME = 30  # litres
 FLOW_RATE = 10  # litres per minute
 HEAT_CAPACITY = 3.8  # kJ/(kg*K)
 DENSITY = 1.04  # kg/litre
@@ -38,15 +38,15 @@ st.title("Fluid Conditioning Loop Model")
 
 # Sidebar controls
 st.sidebar.header("Adjust Parameters")
-Q_edu = st.sidebar.slider("EDU Heat Output (kW)", 0.0, 10.0, 0.0)
-Kp = st.sidebar.slider("PID Proportional Gain (Kp)", 0.0, 200.0, 10.0)
+Q_edu = st.sidebar.slider("EDU Heat Output (kW)", 0.0, 10.0, 5.0)
+Kp = st.sidebar.slider("PID Proportional Gain (Kp)", 0.0, 200.0, 50.0)
 Ki = st.sidebar.slider("PID Integral Gain (Ki)", 0.0, 20.0, 0.0)
-Kd = st.sidebar.slider("PID Derivative Gain (Kd)", 0.0, 200.0, 0.0)
+Kd = st.sidebar.slider("PID Derivative Gain (Kd)", 0.0, 20.0, 0.0)
 T_setpoint = st.sidebar.slider("Setpoint Temperature (°C)", -20.0, 50.0, 23.0)
 T_initial = st.sidebar.slider("Initial Temperature (°C)", 0.0, 100.0, 20.0)
 duration = st.sidebar.slider("Simulation Duration (minutes)", 1, 500, 60)
-ramp_up_time = st.sidebar.slider("Ramp-Up Time (minutes)", 0.1, 100.0, 10.0)
-ramp_down_time = st.sidebar.slider("Ramp-Down Time (minutes)", 0.1, 100.0, 10.0)
+ramp_up_time = st.sidebar.slider("Ramp-Up Time (minutes)", 0.1, 100.0, 20.0)
+ramp_down_time = st.sidebar.slider("Ramp-Down Time (minutes)", 0.1, 100.0, 20.0)
 
 # Time setup
 time = np.linspace(0, duration, num=100)
