@@ -43,8 +43,8 @@ Kd = st.sidebar.slider("PID Derivative Gain (Kd)", 0.0, 10.0, 0.0)
 T_setpoint = st.sidebar.slider("Setpoint Temperature (°C)", -20.0, 50.0, 10.0)
 T_initial = st.sidebar.slider("Initial Temperature (°C)", 0.0, 100.0, 20.0)
 duration = st.sidebar.slider("Simulation Duration (minutes)", 1, 500, 60)
-ramp_up_time = st.sidebar.slider("Ramp-Up Time (minutes)", 0.1, 100.0, 20.0)
-ramp_down_time = st.sidebar.slider("Ramp-Down Time (minutes)", 0.1, 100.0, 20.0)
+ramp_up_time = st.sidebar.slider("Ramp-Up Time (minutes)", 0.1, 1000.0, 200.0)
+ramp_down_time = st.sidebar.slider("Ramp-Down Time (minutes)", 0.1, 1000.0, 200.0)
 
 # Time setup
 time = np.linspace(0, duration, num=100)
