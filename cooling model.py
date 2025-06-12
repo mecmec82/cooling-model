@@ -5,17 +5,22 @@ import matplotlib.pyplot as plt
 # Constants
 VOLUME = 20  # litres
 FLOW_RATE = 10  # litres per minute
-HEAT_CAPACITY = 3.8  # kJ/(kg*K) for 50% glycol-water
+HEAT_CAPACITY = 3.8  # kJ/(kg*K)
 DENSITY = 1.04  # kg/litre
 
-# PID-controlled temperature model
-def model(T, t, Q_edu, Kp, Ki, Kd, T_setpoint, integral, prev_error):
+# PID-controlled temperature model with ramp-up delay
+def model(T, t, Q_edu, Kp, Ki, Kd, T_setpoint, integral, prev_error, ramp_up_time):
     error = T_setpoint - T
     dt = t[1] - t[0]
     integral += error * dt
     derivative = (error - prev_error) / dt
     Q_pid = Kp * error + Ki * integral + Kd * derivative
-    Q_cond = np.clip(Q_pid, -24, 24)  # Conditioning unit capacity limited to ±24 kW
+    Q_cond = np.clip(Q_pid, -24, 24)
+
+    # Apply ramp-up delay
+    ramp_factor = min(t[1] / ramp_up_time, 1)
+    Q_cond *= ramp_factor
+
     Q_total = Q_cond + Q_edu
     dTdt = Q_total / (FLOW_RATE * DENSITY * HEAT_CAPACITY)
     return dTdt, integral, error, Q_cond
@@ -32,6 +37,7 @@ Kd = st.sidebar.slider("PID Derivative Gain (Kd)", 0.0, 10.0, 0.0)
 T_setpoint = st.sidebar.slider("Setpoint Temperature (°C)", -20.0, 50.0, 50.0)
 T_initial = st.sidebar.slider("Initial Temperature (°C)", 0.0, 100.0, 20.0)
 duration = st.sidebar.slider("Simulation Duration (minutes)", 1, 500, 60)
+ramp_up_time = st.sidebar.slider("Ramp-Up Time (minutes)", 0.1, 10.0, 1.0)
 
 # Time setup
 time = np.linspace(0, duration, num=100)
@@ -44,7 +50,7 @@ Q_cond_array = []
 # Simulation loop
 for t in range(len(time) - 1):
     dTdt, integral, prev_error, Q_cond = model(
-        T, time[t:t+2], Q_edu, Kp, Ki, Kd, T_setpoint, integral, prev_error
+        T, time[t:t+2], Q_edu, Kp, Ki, Kd, T_setpoint, integral, prev_error, ramp_up_time
     )
     T += dTdt * (time[t+1] - time[t])
     T_array.append(T)
