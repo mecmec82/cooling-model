@@ -9,22 +9,22 @@ HEAT_CAPACITY = 3.8  # kJ/(kg*K) for 50% glycol-water
 DENSITY = 1.04  # kg/litre
 
 # PID-controlled temperature model
-def model(T, t, Q_cond, Q_edu, Kp, Ki, Kd, T_setpoint, integral, prev_error):
+def model(T, t, Q_edu, Kp, Ki, Kd, T_setpoint, integral, prev_error):
     error = T_setpoint - T
     dt = t[1] - t[0]
     integral += error * dt
     derivative = (error - prev_error) / dt
     Q_pid = Kp * error + Ki * integral + Kd * derivative
-    Q_total = Q_cond + Q_edu + Q_pid
+    Q_cond = np.clip(Q_pid, -24, 24)  # Conditioning unit capacity limited to ±24 kW
+    Q_total = Q_cond + Q_edu
     dTdt = Q_total / (FLOW_RATE * DENSITY * HEAT_CAPACITY)
-    return dTdt, integral, error
+    return dTdt, integral, error, Q_cond
 
 # Streamlit UI
 st.title("Fluid Conditioning Loop Model")
 
 # Sidebar controls
 st.sidebar.header("Adjust Parameters")
-Q_cond = st.sidebar.slider("Conditioning Unit Capacity (kW)", -24.0, 24.0, 0.0)
 Q_edu = st.sidebar.slider("EDU Heat Output (kW)", 0.0, 10.0, 0.0)
 Kp = st.sidebar.slider("PID Proportional Gain (Kp)", 0.0, 10.0, 1.0)
 Ki = st.sidebar.slider("PID Integral Gain (Ki)", 0.0, 10.0, 0.0)
@@ -39,20 +39,29 @@ T = T_initial
 integral = 0
 prev_error = 0
 T_array = []
+Q_cond_array = []
 
 # Simulation loop
 for t in range(len(time) - 1):
-    dTdt, integral, prev_error = model(
-        T, time[t:t+2], Q_cond, Q_edu, Kp, Ki, Kd, T_setpoint, integral, prev_error
+    dTdt, integral, prev_error, Q_cond = model(
+        T, time[t:t+2], Q_edu, Kp, Ki, Kd, T_setpoint, integral, prev_error
     )
     T += dTdt * (time[t+1] - time[t])
     T_array.append(T)
+    Q_cond_array.append(Q_cond)
 
 # Plotting
-fig, ax = plt.subplots()
-ax.plot(time[:-1], T_array, label="Output Temperature")
-ax.axhline(y=T_setpoint, color='r', linestyle='--', label="Setpoint")
-ax.set_xlabel("Time (minutes)")
-ax.set_ylabel("Temperature (°C)")
-ax.legend()
+fig, ax = plt.subplots(2, 1, figsize=(10, 8))
+
+ax[0].plot(time[:-1], T_array, label="Output Temperature")
+ax[0].axhline(y=T_setpoint, color='r', linestyle='--', label="Setpoint")
+ax[0].set_xlabel("Time (minutes)")
+ax[0].set_ylabel("Temperature (°C)")
+ax[0].legend()
+
+ax[1].plot(time[:-1], Q_cond_array, label="Conditioning Unit Output (kW)")
+ax[1].set_xlabel("Time (minutes)")
+ax[1].set_ylabel("Conditioning Output (kW)")
+ax[1].legend()
+
 st.pyplot(fig)
