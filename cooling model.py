@@ -8,8 +8,12 @@ FLOW_RATE = 10  # litres per minute
 HEAT_CAPACITY = 3.8  # kJ/(kg*K)
 DENSITY = 1.04  # kg/litre
 
-# PID-controlled temperature model with ramp-up delay
-def model(T, t, Q_edu, Kp, Ki, Kd, T_setpoint, integral, prev_error, ramp_up_time):
+# Non-linear ramp function (sigmoid)
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+# PID-controlled temperature model with non-linear ramp-up and cool-down delay
+def model(T, t, Q_edu, Kp, Ki, Kd, T_setpoint, integral, prev_error, ramp_up_time, ramp_down_time, prev_Q_cond):
     error = T_setpoint - T
     dt = t[1] - t[0]
     integral += error * dt
@@ -17,9 +21,11 @@ def model(T, t, Q_edu, Kp, Ki, Kd, T_setpoint, integral, prev_error, ramp_up_tim
     Q_pid = Kp * error + Ki * integral + Kd * derivative
     Q_cond = np.clip(Q_pid, -24, 24)
 
-    # Apply ramp-up delay
-    ramp_factor = min(t[1] / ramp_up_time, 1)
-    Q_cond *= ramp_factor
+    # Apply non-linear ramp-up or cool-down if switching direction
+    if np.sign(Q_cond) != np.sign(prev_Q_cond):
+        ramp_time = ramp_down_time if Q_cond < 0 else ramp_up_time
+        ramp_factor = sigmoid((t[1] / ramp_time) * 6 - 3)  # sigmoid centered at ramp_time/2
+        Q_cond *= ramp_factor
 
     Q_total = Q_cond + Q_edu
     dTdt = Q_total / (FLOW_RATE * DENSITY * HEAT_CAPACITY)
@@ -38,6 +44,7 @@ T_setpoint = st.sidebar.slider("Setpoint Temperature (°C)", -20.0, 50.0, 50.0)
 T_initial = st.sidebar.slider("Initial Temperature (°C)", 0.0, 100.0, 20.0)
 duration = st.sidebar.slider("Simulation Duration (minutes)", 1, 500, 60)
 ramp_up_time = st.sidebar.slider("Ramp-Up Time (minutes)", 0.1, 10.0, 1.0)
+ramp_down_time = st.sidebar.slider("Ramp-Down Time (minutes)", 0.1, 10.0, 1.0)
 
 # Time setup
 time = np.linspace(0, duration, num=100)
@@ -46,15 +53,18 @@ integral = 0
 prev_error = 0
 T_array = []
 Q_cond_array = []
+prev_Q_cond = 0
 
 # Simulation loop
 for t in range(len(time) - 1):
     dTdt, integral, prev_error, Q_cond = model(
-        T, time[t:t+2], Q_edu, Kp, Ki, Kd, T_setpoint, integral, prev_error, ramp_up_time
+        T, time[t:t+2], Q_edu, Kp, Ki, Kd, T_setpoint, integral, prev_error,
+        ramp_up_time, ramp_down_time, prev_Q_cond
     )
     T += dTdt * (time[t+1] - time[t])
     T_array.append(T)
     Q_cond_array.append(Q_cond)
+    prev_Q_cond = Q_cond
 
 # Plotting
 fig, ax = plt.subplots(2, 1, figsize=(10, 8))
